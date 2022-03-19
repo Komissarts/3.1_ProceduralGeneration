@@ -34,7 +34,7 @@
 			document.onload = function(e){
 				console.log(e);
 				audio.play();
-				initializer();
+				Initializer();
 			}
 			//plays the audio file if file changed 
 			//(so you dont have to reload the page to change songs)
@@ -45,114 +45,135 @@
 				audio.src = URL.createObjectURL(files[0]);
 				audio.load();
 				audio.play();
-				initializer();
+				Initializer();
 			}
 
 		}
+		//Establish Audio Nodes & Tools
+		{
+			//AudioContext() is a linked list of Audio nodes that contains audio data
+			var context = new AudioContext();
+			//creates an AudioSource node that can be used to manipulate audio data
+			var src = context.createMediaElementSource(audio);
+			//creates an Analyser node that allows us to read audio data
+			var analyser = context.createAnalyser();
+			//allows rw access to the audio files
+			src.connect(analyser);
+			analyser.connect(context.destination);
+			//sample size used when performing Fourier Transform to get frequency Data
+			analyser.fftSize = 2048;
+			//readonly integer, only half of analyser.fftSize. it is the amoount of data
+			//values availble for any music visualizations
+			var bufferLength = analyser.frequencyBinCount;
+			//standard 8-bit integers, holds the values of bufferLength for future use
+			var dataArray = new Uint8Array(bufferLength);
+			//var group = new THREE.Group();
+		}
 
-		function initializer() {
-
-			//Establish Audio Nodes & Tools
+		//Create All Scene Items
+		{
+			//Create Camera & Scene
 			{
+				var scene = new THREE.Scene();
+				var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+				camera.position.set(0,0,100);
+				camera.lookAt(scene.position);
+			}
+
+			//Create Renderer
+			{
+				var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
+
+			//Create Plane Geometry
+			{
+				//function AddPlanes(){
+				var planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
+				var planeMaterial = new THREE.MeshLambertMaterial({
+					color: 0x68228b,
+					side: THREE.DoubleSide,
+					wireframe: true
+				});
+				var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+				plane.rotation.x = -0.5 * Math.PI;
+				plane.position.set(0, -30, 0);
+
+				//scene.add(plane);
+				//group.add(plane);
+				//};
 				
-				//AudioContext() is a linked list of Audio nodes that contains audio data
-				var context = new AudioContext();
-				//creates an AudioSource node that can be used to manipulate audio data
-				var src = context.createMediaElementSource(audio);
-				//creates an Analyser node that allows us to read audio data
-				var analyser = context.createAnalyser();
-				//allows rw access to the audio files
-				src.connect(analyser);
-				analyser.connect(context.destination);
-				//sample size used when performing Fourier Transform to get frequency Data
-				analyser.fftSize = 2048;
-				//readonly integer, only half of analyser.fftSize. it is the amoount of data
-				//values availble for any music visualizations
-				var bufferLength = analyser.frequencyBinCount;
-				//standard 8-bit integers, holds the values of bufferLength for future use
-				var dataArray = new Uint8Array(bufferLength);
-				//var group = new THREE.Group();
 			}
 
-			//Create All Scene Items
-			{
-				//Create Camera & Scene
-				{
-					var scene = new THREE.Scene();
-					var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-					camera.position.set(0,0,100);
-					camera.lookAt(scene.position);
-				}
+			//Create Cube Geomtery
+			function AddCubes(){
 
-				//Create Renderer
-				{
-					var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-					renderer.setSize(window.innerWidth, window.innerHeight);
-				}
+				var cubeGeometry = new THREE.BoxGeometry(20,10,1000, 1, 1, 50);
+				var cubeMaterial = new THREE.MeshBasicMaterial({
+					color: new THREE.Color(1, 0, 0),
+					wireframe: true
+				});
+	
+				var cube = [];
+				var n=30;
+				for(i = 0; i<n; i++){
+					var rot2 = new THREE.Matrix4();
+					var rot = new THREE.Matrix4();
+					var tra = new THREE.Matrix4();
+					var combined = new THREE.Matrix4();
 
-				//Create Plane Geometry
-				{
-					var planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
-					var planeMaterial = new THREE.MeshLambertMaterial({
-						color: 0x68228b,
-						side: THREE.DoubleSide,
-						wireframe: true
-					});
-					var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-					plane.rotation.x = -0.5 * Math.PI;
-					plane.position.set(0, -30, 0);
-					//group.add(plane);
-				}
+					rot2.makeRotationZ(i*(Math.PI/n));
+					tra.makeTranslation(0, 100, 0);
+					rot.makeRotationZ(i*(2*Math.PI/n));
 
-				//Create Cube Geomtery
-				{
-					var boxGeometry = new THREE.BoxGeometry(10,10,10);
-					var boxMaterial = new THREE.MeshBasicMaterial();
-					boxMaterial.color = new THREE.Color(0, 1, 0);
-					boxMaterial.wireframe = true;
-					var box = new THREE.Mesh(boxGeometry, boxMaterial);
-					box.position.set(0, 0, 0);
-					
-				}
+					combined.multiply(rot);
+					combined.multiply(tra);
 
-				//Create Sphere Geometry
-				{
-					var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3);
-					var ballMaterial = new THREE.MeshLambertMaterial({
-						color: 0xff00ee,
-						wireframe: true
-					});
-					var ball = new THREE.Mesh(icosahedronGeometry, ballMaterial);
-					ball.position.set(0, 0, 0);
-				}
+					cube[i] = new THREE.Mesh(cubeGeometry, cubeMaterial);
+					cube[i].applyMatrix(combined);
+					scene.add(cube[i]);
+				};
 				
-				//Create Lights
-				{
-					var ambientLight = new THREE.AmbientLight(0xaaaaaa);
-					var spotLight = new THREE.SpotLight(0xffffff);
-					spotLight.intensity = 0.9;
-					spotLight.position.set(-10, 40, 20);
-					spotLight.lookAt(ball);
-					spotLight.castShadow = true;
-				}
 			}
+			
 
-			//Add everything to scene
+			//Create Sphere Geometry
 			{
-				scene.add(camera);
-				scene.add(ambientLight);
-				scene.add(spotLight);
-				scene.add(plane);
-				scene.add(ball);
-				scene.add(box);
-				//scene.add(group);
+				var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3);
+				var ballMaterial = new THREE.MeshLambertMaterial({
+					color: 0xff00ee,
+					wireframe: true
+				});
+				var ball = new THREE.Mesh(icosahedronGeometry, ballMaterial);
+				ball.position.set(0, 0, 0);
 			}
-
+			
+			//Create Lights
+			{
+				var ambientLight = new THREE.AmbientLight(0xaaaaaa);
+				var spotLight = new THREE.SpotLight(0xffffff);
+				spotLight.intensity = 0.9;
+				spotLight.position.set(-10, 40, 20);
+				spotLight.lookAt(ball);
+				spotLight.castShadow = true;
+			}
+		}
 			document.getElementById('out').appendChild(renderer.domElement);
 			window.addEventListener('resize', onWindowResize, false);
 
-			
 
+		function Initializer() {
+				//Add everything to scene
+				{
+					scene.add(camera);
+					scene.add(ambientLight);
+					scene.add(spotLight);
+					//AddPlanes();
+					scene.add(plane);
+					scene.add(ball);
+					AddCubes();
+					//scene.add(group);
+				}
 			//does all the animation & frame dependent Calculations
 			//tried to call it 'visuallizer' but stuff kept breaking so i gave up
 			function render() {
@@ -176,6 +197,11 @@
 				//Adds Mesh Distortion
 				{
 					distortPlane(plane, modulate(upperAvgFr, 0, 1, 0.5, 4));
+
+				//	for(i = 0; i< n; i++){
+				//		distortPlane(cube[i], modulate(upperAvgFr, 0, 1, 0.5, 4));
+				//	}
+					
 					//distortMesh(plane2, modulate(lowerMaxFr, 0, 1, 0.5, 4));
 					distortBall(ball, modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8), modulate(upperAvgFr, 0, 1, 0, 4));
 				}
@@ -199,6 +225,7 @@
 			render();
 			
 		}
+		
 	}
 
 	//Mesh Distortion Functions
@@ -208,7 +235,7 @@
 			mesh.geometry.vertices.forEach(function (vertex, i) {
 				var offset = mesh.geometry.parameters.radius;
 				var amp = 7;
-				var time = window.performance.now();
+				var time = Date.now();
 				vertex.normalize();
 				var rf = 0.00001;
 				var distance = (offset + bassFr ) + noise.noise3D(vertex.x + time *rf*7, vertex.y +  time*rf*8, vertex.z + time*rf*9) * amp * treFr;
@@ -223,6 +250,7 @@
 		function distortPlane(mesh, distortionFr) {
 			mesh.geometry.vertices.forEach(function (vertex, i) {
 				var amp = 5;
+				//returns the number of milliseconds since 1st jan 1970, for extra random noise
 				var time = Date.now();
 				var distance = (noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * amp;
 				vertex.z = distance;
