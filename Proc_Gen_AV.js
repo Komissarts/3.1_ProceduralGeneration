@@ -1,3 +1,10 @@
+/* - set up first person camera & movement
+// - Set up Outer cube ring W/ mesh deformation
+// - Set up Sphere array with random positions & movements
+// - Add colour changing 
+// - Add customizable User Interaction screens
+*/ 
+
 	//Misc Visualizer Setup
 	{
 	//deals with the window being resized
@@ -48,34 +55,33 @@
 			//Establish Audio Nodes & Tools
 			{
 				
-			//AudioContext() is a linked list of Audio nodes that contains audio data
+				//AudioContext() is a linked list of Audio nodes that contains audio data
 				var context = new AudioContext();
-			//creates an AudioSource node that can be used to manipulate audio data
+				//creates an AudioSource node that can be used to manipulate audio data
 				var src = context.createMediaElementSource(audio);
-			//creates an Analyser node that allows us to read audio data
+				//creates an Analyser node that allows us to read audio data
 				var analyser = context.createAnalyser();
-			//allows rw access to the audio files
+				//allows rw access to the audio files
 				src.connect(analyser);
 				analyser.connect(context.destination);
-			//sample size used when performing Fourier Transform to get frequency Data
+				//sample size used when performing Fourier Transform to get frequency Data
 				analyser.fftSize = 2048;
-			//readonly integer, only half of analyser.fftSize. it is the amoount of data
-			//values availble for any music visualizations
+				//readonly integer, only half of analyser.fftSize. it is the amoount of data
+				//values availble for any music visualizations
 				var bufferLength = analyser.frequencyBinCount;
-			//standard 8-bit integers, holds the values of bufferLength for future use
+				//standard 8-bit integers, holds the values of bufferLength for future use
 				var dataArray = new Uint8Array(bufferLength);
-				var scene = new THREE.Scene();
-			//var group = new THREE.Group();
+				//var group = new THREE.Group();
 			}
 
 			//Create All Scene Items
 			{
-				//Create Camera
+				//Create Camera & Scene
 				{
+					var scene = new THREE.Scene();
 					var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 					camera.position.set(0,0,100);
 					camera.lookAt(scene.position);
-					scene.add(camera);
 				}
 
 				//Create Renderer
@@ -84,7 +90,7 @@
 					renderer.setSize(window.innerWidth, window.innerHeight);
 				}
 
-				//Create Plane Mesh
+				//Create Plane Geometry
 				{
 					var planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
 					var planeMaterial = new THREE.MeshLambertMaterial({
@@ -98,20 +104,18 @@
 					//group.add(plane);
 				}
 
-				//Create Cubes
+				//Create Cube Geomtery
 				{
-				/*
-					var boxGeometry = new THREE.boxGeometry(1,1,1);
-					var boxMaterial = new THREE.MeshLambertMaterial({
-						color: 0x68228b,
-						wireframe: true
-					});
-					var rect = new THREE.Mesh(boxGeometry, boxMaterial);
-					rect.position.set(0, 0, 0);
-					*/
+					var boxGeometry = new THREE.BoxGeometry(10,10,10);
+					var boxMaterial = new THREE.MeshBasicMaterial();
+					boxMaterial.color = new THREE.Color(0, 1, 0);
+					boxMaterial.wireframe = true;
+					var box = new THREE.Mesh(boxGeometry, boxMaterial);
+					box.position.set(0, 0, 0);
+					
 				}
 
-				//Create Sphere
+				//Create Sphere Geometry
 				{
 					var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3);
 					var ballMaterial = new THREE.MeshLambertMaterial({
@@ -120,7 +124,6 @@
 					});
 					var ball = new THREE.Mesh(icosahedronGeometry, ballMaterial);
 					ball.position.set(0, 0, 0);
-					//group.add(ball);
 				}
 				
 				//Create Lights
@@ -136,16 +139,19 @@
 
 			//Add everything to scene
 			{
+				scene.add(camera);
 				scene.add(ambientLight);
 				scene.add(spotLight);
 				scene.add(plane);
 				scene.add(ball);
-				//scene.add(rect);
+				scene.add(box);
 				//scene.add(group);
 			}
 
 			document.getElementById('out').appendChild(renderer.domElement);
 			window.addEventListener('resize', onWindowResize, false);
+
+			
 
 			//does all the animation & frame dependent Calculations
 			//tried to call it 'visuallizer' but stuff kept breaking so i gave up
@@ -185,10 +191,13 @@
 					//controls.update();
 				}
 
+				//controls.update();
+
 				renderer.render(scene, camera);
 				requestAnimationFrame(render);
 			}
 			render();
+			
 		}
 	}
 
