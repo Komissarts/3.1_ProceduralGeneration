@@ -87,23 +87,48 @@
 			}
 
 			//Create Plane Geometry
-			{
-				//function AddPlanes(){
-				var planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
+			function AddPlanes(){
+				var planeGeometry = new THREE.PlaneGeometry(20, 1000, 1, 50);
+				//var planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
 				var planeMaterial = new THREE.MeshLambertMaterial({
 					color: 0x68228b,
 					side: THREE.DoubleSide,
 					wireframe: true
 				});
-				var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-				plane.rotation.x = -0.5 * Math.PI;
-				plane.position.set(0, -30, 0);
+
+				var plane = [];
+				var n=30
+				for(i = 0; i<n; i++){
+					var rot = new THREE.Matrix4();
+					var rot2 = new THREE.Matrix4();
+					var tra = new THREE.Matrix4();
+					var combined = new THREE.Matrix4();
+
+					rot2.makeRotationX(-0.5 * Math.PI);
+					rot.makeRotationZ(i*(2*Math.PI/n));
+					tra.makeTranslation(0,100,0);
+
+					combined.multiply(rot);
+					combined.multiply(tra);
+					combined.multiply(rot2);
+
+					plane[i] = new THREE.Mesh(planeGeometry, planeMaterial);
+					//plane[i].rotation.x = -0.5 * Math.PI;
+					//plane[i].position.set(0, -30, 0);
+					
+					plane[i].applyMatrix(combined);
+					scene.add(plane[i]);
+				}
+
+				//var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+				//plane.rotation.x = -0.5 * Math.PI;
+				//plane.position.set(0, -30, 0);
 
 				//scene.add(plane);
 				//group.add(plane);
-				//};
+			};
 				
-			}
+			
 
 			//Create Cube Geomtery
 			function AddCubes(){
@@ -122,7 +147,6 @@
 					var tra = new THREE.Matrix4();
 					var combined = new THREE.Matrix4();
 
-					rot2.makeRotationZ(i*(Math.PI/n));
 					tra.makeTranslation(0, 100, 0);
 					rot.makeRotationZ(i*(2*Math.PI/n));
 
@@ -168,10 +192,10 @@
 					scene.add(camera);
 					scene.add(ambientLight);
 					scene.add(spotLight);
-					//AddPlanes();
-					scene.add(plane);
+					AddPlanes();
+					//AddCubes();
+					//scene.add(plane);
 					scene.add(ball);
-					AddCubes();
 					//scene.add(group);
 				}
 			//does all the animation & frame dependent Calculations
@@ -196,11 +220,7 @@
 				
 				//Adds Mesh Distortion
 				{
-					distortPlane(plane, modulate(upperAvgFr, 0, 1, 0.5, 4));
-
-				//	for(i = 0; i< n; i++){
-				//		distortPlane(cube[i], modulate(upperAvgFr, 0, 1, 0.5, 4));
-				//	}
+					//distortPlane(plane, modulate(upperAvgFr, 0, 1, 0.5, 4));
 					
 					//distortMesh(plane2, modulate(lowerMaxFr, 0, 1, 0.5, 4));
 					distortBall(ball, modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8), modulate(upperAvgFr, 0, 1, 0, 4));
@@ -216,8 +236,6 @@
 					//group.rotation.y += 0.005;
 					//controls.update();
 				}
-
-				//controls.update();
 
 				renderer.render(scene, camera);
 				requestAnimationFrame(render);
