@@ -23,6 +23,7 @@
 	//visualizer initializer rhymes lol
 	function visualizerInitializer(){
 
+
 		//HTML Audio Management stuff
 		{
 			//import the audio files
@@ -49,6 +50,7 @@
 			}
 
 		}
+
 
 		function initializer() {
 
@@ -81,12 +83,13 @@
 					var scene = new THREE.Scene();
 					var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 					camera.position.set(0,0,100);
-					camera.lookAt(scene.position);
+					camera.lookAt(scene.position);				
 				}
 
 				//Create Renderer
 				{
 					var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+					renderer.setPixelRatio( window.devicePixelRatio );
 					renderer.setSize(window.innerWidth, window.innerHeight);
 				}
 
@@ -101,7 +104,6 @@
 					var plane = new THREE.Mesh(planeGeometry, planeMaterial);
 					plane.rotation.x = -0.5 * Math.PI;
 					plane.position.set(0, -30, 0);
-					//group.add(plane);
 				}
 
 				//Create Cube Geomtery
@@ -112,7 +114,8 @@
 					boxMaterial.wireframe = true;
 					var box = new THREE.Mesh(boxGeometry, boxMaterial);
 					box.position.set(0, 0, 0);
-					
+					var bdrRngArr = [];
+					var n = 50;
 				}
 
 				//Create Sphere Geometry
@@ -145,17 +148,14 @@
 				scene.add(plane);
 				scene.add(ball);
 				scene.add(box);
-				//scene.add(group);
 			}
 
-			document.getElementById('out').appendChild(renderer.domElement);
-			window.addEventListener('resize', onWindowResize, false);
-
 			
-
+			
 			//does all the animation & frame dependent Calculations
 			//tried to call it 'visuallizer' but stuff kept breaking so i gave up
 			function render() {
+				requestAnimationFrame(render);
 
 				//Seperates Frequency Data into lowest - highest + averages
 				{
@@ -176,7 +176,6 @@
 				//Adds Mesh Distortion
 				{
 					distortPlane(plane, modulate(upperAvgFr, 0, 1, 0.5, 4));
-					//distortMesh(plane2, modulate(lowerMaxFr, 0, 1, 0.5, 4));
 					distortBall(ball, modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8), modulate(upperAvgFr, 0, 1, 0, 4));
 				}
 		
@@ -187,17 +186,16 @@
 					ball.rotation.x += ballRotSpd
 					ball.rotation.y += ballRotSpd
 					ball.rotation.z += ballRotSpd
-					//group.rotation.y += 0.005;
-					//controls.update();
 				}
 
-				//controls.update();
+				//Box Ring & Rotation
+				{
+
+				}
 
 				renderer.render(scene, camera);
-				requestAnimationFrame(render);
 			}
 			render();
-			
 		}
 	}
 
