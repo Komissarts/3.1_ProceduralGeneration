@@ -1,8 +1,12 @@
 /* - set up first person camera & movement
-// - Set up Outer cube ring W/ mesh deformation
+// - Set up Outer cube ring W/ mesh deformation | Done
 // - Set up Sphere array with random positions & movements
 // - Add colour changing 
 // - Add customizable User Interaction screens
+// - Songs used
+//
+// Andres Roco 
+// SN: 14250791
 */ 
 
 	//Misc Visualizer Setup
@@ -22,6 +26,16 @@
 
 	//visualizer initializer rhymes lol
 	function visualizerInitializer(){
+
+		var colour1;
+		var colour2;
+
+		Number.prototype.clamp = function(min, max){
+			return Math.min(Math.max(this, min), max)
+		}
+
+		var bDistance;
+		var pDistance;
 
 		//HTML Audio Management stuff
 		{
@@ -67,7 +81,7 @@
 			var bufferLength = analyser.frequencyBinCount;
 			//standard 8-bit integers, holds the values of bufferLength for future use
 			var dataArray = new Uint8Array(bufferLength);
-			//var group = new THREE.Group();
+			var group = new THREE.Group();
 		}
 
 		//Create All Scene Items
@@ -87,48 +101,53 @@
 			}
 
 			//Create Plane Geometry
-			function AddPlanes(){
-				var planeGeometry = new THREE.PlaneGeometry(20, 1000, 1, 50);
-				//var planeGeometry = new THREE.PlaneGeometry(800, 800, 20, 20);
+			{
+				var planeGeometry = new THREE.PlaneGeometry(145, 1000, 6, 50);
 				var planeMaterial = new THREE.MeshLambertMaterial({
-					color: 0x68228b,
+					color: 0x68228b, //Adjustable Values
+					//new THREE.Color("rgb(100, 0, 0)"),
+					//0x68228b
 					side: THREE.DoubleSide,
 					wireframe: true
 				});
+				//Established Plane Array, fundamentally similar to Workshop Lectures
+				var planeArr = [5];
+				var n=5
+				function getPlanes(num){
+					for(i = 0; i<n; i++){
+						var rot = new THREE.Matrix4();
+						var rot2 = new THREE.Matrix4();
+						var tra = new THREE.Matrix4();
+						var combined = new THREE.Matrix4();
 
-				var plane = [];
-				var n=30
-				for(i = 0; i<n; i++){
-					var rot = new THREE.Matrix4();
-					var rot2 = new THREE.Matrix4();
-					var tra = new THREE.Matrix4();
-					var combined = new THREE.Matrix4();
+						rot2.makeRotationX(-0.5 * Math.PI);
+						rot.makeRotationZ(i*(2*Math.PI/n));
+						tra.makeTranslation(0,100,0);
 
-					rot2.makeRotationX(-0.5 * Math.PI);
-					rot.makeRotationZ(i*(2*Math.PI/n));
-					tra.makeTranslation(0,100,0);
+						combined.multiply(rot);
+						combined.multiply(tra);
+						combined.multiply(rot2);
 
-					combined.multiply(rot);
-					combined.multiply(tra);
-					combined.multiply(rot2);
+						planeArr[i] = new THREE.Mesh(planeGeometry, planeMaterial);
+						
+						planeArr[i].applyMatrix(combined);
+					}
+					return planeArr[num];
+				};
+			}
 
-					plane[i] = new THREE.Mesh(planeGeometry, planeMaterial);
-					//plane[i].rotation.x = -0.5 * Math.PI;
-					//plane[i].position.set(0, -30, 0);
-					
-					plane[i].applyMatrix(combined);
-					scene.add(plane[i]);
-				}
-
-				//var plane = new THREE.Mesh(planeGeometry, planeMaterial);
-				//plane.rotation.x = -0.5 * Math.PI;
-				//plane.position.set(0, -30, 0);
-
-				//scene.add(plane);
-				//group.add(plane);
-			};
-				
-			
+			//Create Sphere Geometry
+			{
+				var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3); //Adjustable Values
+				var ballMaterial = new THREE.MeshLambertMaterial({
+					color: 0xff00ee,
+					//new THREE.Color("rgb(0, 0, 100)"),
+					//0xff00ee,
+					wireframe: true
+				});
+				var ball = new THREE.Mesh(icosahedronGeometry, ballMaterial);
+				ball.position.set(0, 0, 0);
+			}
 
 			//Create Cube Geomtery
 			function AddCubes(){
@@ -160,23 +179,11 @@
 				
 			}
 			
-
-			//Create Sphere Geometry
-			{
-				var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3);
-				var ballMaterial = new THREE.MeshLambertMaterial({
-					color: 0xff00ee,
-					wireframe: true
-				});
-				var ball = new THREE.Mesh(icosahedronGeometry, ballMaterial);
-				ball.position.set(0, 0, 0);
-			}
-			
 			//Create Lights
 			{
 				var ambientLight = new THREE.AmbientLight(0xaaaaaa);
 				var spotLight = new THREE.SpotLight(0xffffff);
-				spotLight.intensity = 0.9;
+				spotLight.intensity = 0.9; //Adjustable Values
 				spotLight.position.set(-10, 40, 20);
 				spotLight.lookAt(ball);
 				spotLight.castShadow = true;
@@ -185,23 +192,27 @@
 			document.getElementById('out').appendChild(renderer.domElement);
 			window.addEventListener('resize', onWindowResize, false);
 
-
 		function Initializer() {
-				//Add everything to scene
-				{
-					scene.add(camera);
-					scene.add(ambientLight);
-					scene.add(spotLight);
-					AddPlanes();
-					//AddCubes();
-					//scene.add(plane);
-					scene.add(ball);
-					//scene.add(group);
-				}
-			//does all the animation & frame dependent Calculations
-			//tried to call it 'visuallizer' but stuff kept breaking so i gave up
-			function render() {
+			//Add everything to scene
+			{
+				scene.add(camera);
+				scene.add(ambientLight);
+				scene.add(spotLight);
+				scene.add(ball);
+				//AddCubes();
+				//add all the plane meshes into a group, add the group to the scene and then rotate the group
+				group.add(getPlanes(0));
+				group.add(planeArr[1]);
+				group.add(planeArr[2]);
+				group.add(planeArr[3]);
+				group.add(planeArr[4]);
+				scene.add(group);
+			}
 
+			function render() {
+				this.colour1 = Number.prototype.clamp(lowerMaxFr, lowerAvgFr)
+				this.colour2 = Number.prototype.clamp(lowerAvgFr, upperMaxFr)
+				
 				//Seperates Frequency Data into lowest - highest + averages
 				{
 					analyser.getByteFrequencyData(dataArray);
@@ -217,33 +228,26 @@
 					var upperMaxFr = upperMax / upperHalfArray.length;
 					var upperAvgFr = upperAvg / upperHalfArray.length;
 				}
-				
+
 				//Adds Mesh Distortion
 				{
-					//distortPlane(plane, modulate(upperAvgFr, 0, 1, 0.5, 4));
-					
-					//distortMesh(plane2, modulate(lowerMaxFr, 0, 1, 0.5, 4));
+					distortPlane(getPlanes(0), modulate(upperAvgFr, 0, 1, 0.5, 4));
 					distortBall(ball, modulate(Math.pow(lowerMaxFr, 0.8), 0, 1, 0, 8), modulate(upperAvgFr, 0, 1, 0, 4));
 				}
-		
-				//Sphere Rotation & Associated Variables
-				{
-					var ballRotSpd = (overallAvg/10000)+0.005
 
+				//Rotation Values
+				{
+					var ballRotSpd = (overallAvg/10500)+0.005 //Adjustable Value
 					ball.rotation.x += ballRotSpd
 					ball.rotation.y += ballRotSpd
 					ball.rotation.z += ballRotSpd
-					//group.rotation.y += 0.005;
-					//controls.update();
+					group.rotation.z += ballRotSpd;
 				}
-
 				renderer.render(scene, camera);
 				requestAnimationFrame(render);
 			}
 			render();
-			
 		}
-		
 	}
 
 	//Mesh Distortion Functions
@@ -252,13 +256,15 @@
 		function distortBall(mesh, bassFr, treFr) {
 			mesh.geometry.vertices.forEach(function (vertex, i) {
 				var offset = mesh.geometry.parameters.radius;
-				var amp = 7;
+				var amp = 10;
+				//returns the number of milliseconds since 1st jan 1970, for extra random noise
 				var time = Date.now();
 				vertex.normalize();
 				var rf = 0.00001;
-				var distance = (offset + bassFr ) + noise.noise3D(vertex.x + time *rf*7, vertex.y +  time*rf*8, vertex.z + time*rf*9) * amp * treFr;
-				vertex.multiplyScalar(distance);
+				this.bDistance = (offset + bassFr ) + noise.noise3D(vertex.x + time *rf*7, vertex.y +  time*rf*8, vertex.z + time*rf*9) * amp * treFr;
+				vertex.multiplyScalar(bDistance);
 			});
+			//just updates the object's verticies and faces
 			mesh.geometry.verticesNeedUpdate = true;
 			mesh.geometry.normalsNeedUpdate = true;
 			mesh.geometry.computeVertexNormals();
@@ -267,11 +273,10 @@
 
 		function distortPlane(mesh, distortionFr) {
 			mesh.geometry.vertices.forEach(function (vertex, i) {
-				var amp = 5;
-				//returns the number of milliseconds since 1st jan 1970, for extra random noise
+				var amp = 10;
 				var time = Date.now();
-				var distance = (noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * amp;
-				vertex.z = distance;
+				this.pDistance = (noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * amp;
+				vertex.z = pDistance;
 			});
 			mesh.geometry.verticesNeedUpdate = true;
 			mesh.geometry.normalsNeedUpdate = true;

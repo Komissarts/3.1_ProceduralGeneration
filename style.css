@@ -3,7 +3,7 @@
 	--bgColorLight : rgb(14, 14, 31);
 	--textColor : rgb(107, 230, 252);
 	--textColorDark : hsla(242, 36%, 0%, 1);
-	--paperColor: hsla(242, 86%, 44%, 1);
+	--paperColor: rgb(18, 16, 70);
 	--paperColorDark: hsla(242, 86%, 34%, 1);
 	--shadowColorFaint: hsla(0, 0%, 0%, 0.2);
   }
