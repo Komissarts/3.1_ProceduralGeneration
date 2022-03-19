@@ -3,7 +3,6 @@
 // - Set up Sphere array with random positions & movements
 // - Add colour changing 
 // - Add customizable User Interaction screens
-// - Songs used
 //
 // Andres Roco 
 // SN: 14250791
@@ -44,14 +43,15 @@
 			var audio = document.getElementById("audio");
 			var fileLabel = document.querySelector("label.file");
 
+
 			//playes the audio file on page load
 			document.onload = function(e){
 				console.log(e);
 				audio.play();
 				Initializer();
 			}
-			//plays the audio file if file changed 
-			//(so you dont have to reload the page to change songs)
+			//plays the audio file if file changed (so you dont have to reload the page to change songs)
+			//audio.load() -> audio.play() -> Initializer()
 			file.onchange = function(){
 				fileLabel.classList.add('normal');
 				audio.classList.add('active');
@@ -81,6 +81,7 @@
 			var bufferLength = analyser.frequencyBinCount;
 			//standard 8-bit integers, holds the values of bufferLength for future use
 			var dataArray = new Uint8Array(bufferLength);
+			//group to be able to edit/interact with all the side panels simultaneuosly
 			var group = new THREE.Group();
 		}
 
@@ -100,7 +101,7 @@
 				renderer.setSize(window.innerWidth, window.innerHeight);
 			}
 
-			//Create Plane Geometry
+			//Create Plane Geometry (Outside border Planes use same concept as lab week3 mobius strip)
 			{
 				var planeGeometry = new THREE.PlaneGeometry(145, 1000, 6, 50);
 				var planeMaterial = new THREE.MeshLambertMaterial({
@@ -136,9 +137,9 @@
 				};
 			}
 
-			//Create Sphere Geometry
+			//Create Sphere Geometry (icosahedron with adjustable detail, wireframe on)
 			{
-				var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3); //Adjustable Values
+				var icosahedronGeometry = new THREE.IcosahedronGeometry(10, 3); //Adjustable Values//
 				var ballMaterial = new THREE.MeshLambertMaterial({
 					color: 0xff00ee,
 					//new THREE.Color("rgb(0, 0, 100)"),
@@ -149,7 +150,7 @@
 				ball.position.set(0, 0, 0);
 			}
 
-			//Create Cube Geomtery
+			//Create Cube Geomtery (not included)
 			function AddCubes(){
 
 				var cubeGeometry = new THREE.BoxGeometry(20,10,1000, 1, 1, 50);
@@ -193,7 +194,7 @@
 			window.addEventListener('resize', onWindowResize, false);
 
 		function Initializer() {
-			//Add everything to scene
+			//Adds everything to scene
 			{
 				scene.add(camera);
 				scene.add(ambientLight);
@@ -210,8 +211,6 @@
 			}
 
 			function render() {
-				this.colour1 = Number.prototype.clamp(lowerMaxFr, lowerAvgFr)
-				this.colour2 = Number.prototype.clamp(lowerAvgFr, upperMaxFr)
 				
 				//Seperates Frequency Data into lowest - highest + averages
 				{
@@ -237,10 +236,10 @@
 
 				//Rotation Values
 				{
-					var ballRotSpd = (overallAvg/10500)+0.005 //Adjustable Value
-					ball.rotation.x += ballRotSpd
-					ball.rotation.y += ballRotSpd
-					ball.rotation.z += ballRotSpd
+					var ballRotSpd = (overallAvg/10500)+0.005 //Adjustable Value//
+					ball.rotation.x += ballRotSpd;
+					ball.rotation.y += ballRotSpd;
+					ball.rotation.z += ballRotSpd;
 					group.rotation.z += ballRotSpd;
 				}
 				renderer.render(scene, camera);
@@ -254,15 +253,18 @@
 	{
 		//distorts the ball mesh with bass and treble data from audio file
 		function distortBall(mesh, bassFr, treFr) {
+			//calculates new locations for every verticie in the mesh
 			mesh.geometry.vertices.forEach(function (vertex, i) {
 				var offset = mesh.geometry.parameters.radius;
-				var amp = 10;
+				//Base Amplifier value
+				var amp = 10; //Adjustable value//
 				//returns the number of milliseconds since 1st jan 1970, for extra random noise
 				var time = Date.now();
 				vertex.normalize();
 				var rf = 0.00001;
-				this.bDistance = (offset + bassFr ) + noise.noise3D(vertex.x + time *rf*7, vertex.y +  time*rf*8, vertex.z + time*rf*9) * amp * treFr;
-				vertex.multiplyScalar(bDistance);
+				//calculating new vert distance from base mesh
+				var distance = (offset + bassFr ) + noise.noise3D(vertex.x + time *rf*7, vertex.y +  time*rf*8, vertex.z + time*rf*9) * amp * treFr;
+				vertex.multiplyScalar(distance);
 			});
 			//just updates the object's verticies and faces
 			mesh.geometry.verticesNeedUpdate = true;
@@ -271,12 +273,13 @@
 			mesh.geometry.computeFaceNormals();
 		}
 
+		//same as distortBall, except it uses 2D noise instead of 3D, moves in Z direction instead of multiplyScalar
 		function distortPlane(mesh, distortionFr) {
 			mesh.geometry.vertices.forEach(function (vertex, i) {
 				var amp = 10;
 				var time = Date.now();
-				this.pDistance = (noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * amp;
-				vertex.z = pDistance;
+				var distance = (noise.noise2D(vertex.x + time * 0.0003, vertex.y + time * 0.0001) + 0) * distortionFr * amp;
+				vertex.z = distance;
 			});
 			mesh.geometry.verticesNeedUpdate = true;
 			mesh.geometry.normalsNeedUpdate = true;
